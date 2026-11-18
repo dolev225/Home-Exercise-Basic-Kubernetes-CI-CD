@@ -29,7 +29,7 @@ variable "availability_zones" {
   default     = ["us-east-1a", "us-east-1b"]
 }
 
-variable "iam" {
+variable "ami" {
   type    = string
   description = "iam version"
   default = "AL2_x86_64"
