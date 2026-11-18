@@ -1,12 +1,23 @@
+FROM alpine:latest AS builder
+
+RUN apk add --no-cache git
+
+ARG REPO_URL=https://github.com/dandolinsky1/malamhomework.git
+ARG BRANCH=master
+
+RUN git clone -b ${BRANCH} ${REPO_URL} /app-source
+
+
+#---
 FROM node:18-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY --from=builder /app-source/package*.json ./
 
-RUN npm ci --only=production
+RUN npm install --production
 
-COPY . .
+COPY --from=builder /app-source /app
 
 EXPOSE 3000
 

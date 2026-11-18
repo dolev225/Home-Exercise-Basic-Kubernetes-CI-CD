@@ -1,0 +1,9 @@
+replicas: 1
+
+image:
+  repository: dolev1234/node-demo-local   
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+target_port: 3000  
+port: 80           

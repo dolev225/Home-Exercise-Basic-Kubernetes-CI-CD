@@ -1,4 +1,4 @@
-name: 'Terraform EKS Pipeline'
+name: 'pipeline-project'
 
 on:
   push:
@@ -17,14 +17,47 @@ permissions:
   contents: read
 
 jobs:
-  terraform:
+  build-and-push:
+    name: 'Build and Push Docker Image'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Notify Slack (Login)
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: 'login to docker hub passed'
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Q1/dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/test10:latest
+
+      - name: Notify Slack (Build Success)
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: 'build and push passed and push to docker hub'
+
+  terraform-deploy:
     name: 'Terraform Validate & Apply'
     runs-on: ubuntu-latest
-    
+    needs: [build-and-push]
     defaults:
       run:
         working-directory: Q1
-    
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -43,7 +76,6 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-
 
       - name: Terraform Validate
         run: terraform validate
