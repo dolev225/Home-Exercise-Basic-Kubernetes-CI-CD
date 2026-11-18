@@ -29,6 +29,12 @@ variable "availability_zones" {
   default     = ["us-east-1a", "us-east-1b"]
 }
 
+variable "iam" {
+  type    = string
+  description = "iam version"
+  default = "AL2_x86_64"
+}
+
 variable "vpc_cidr" {
   type        = string
   description = "CIDR block for the VPC"
