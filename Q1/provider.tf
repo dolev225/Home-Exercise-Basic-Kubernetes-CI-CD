@@ -1,4 +1,6 @@
 terraform {
+  required_version = ">= 1.10.0"
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -13,32 +15,101 @@ terraform {
       version = "~> 2.12"
     }
   }
+
+
 }
 
-# Connect to AWS provider
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
+
+  # Organization policy: these three tags are required on every resource.
+  default_tags {
+    tags = {
+      environment = var.environment
+      owner       = var.owner
+      cost_center = var.cost_center
+    }
+  }
 }
 
-# Data sources to get EKS cluster info (עדכן את שם הקלאסטר לפי השם האמיתי שלך ב-AWS)
-data "aws_eks_cluster" "cluster" {
-  name = "my-cluster-name" 
-}
-
-data "aws_eks_cluster_auth" "cluster" {
-  name = data.aws_eks_cluster.cluster.name
-}
-
+# Kubernetes/Helm providers read the cluster details straight from the module outputs
+# (no data sources that depend on the module, which breaks the first apply).
 provider "kubernetes" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
+  host                   = module.my_infrastructure.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.my_infrastructure.cluster_ca_data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.my_infrastructure.cluster_name, "--region", var.aws_region]
+  }
 }
 
 provider "helm" {
   kubernetes {
-    host                   = data.aws_eks_cluster.cluster.endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.cluster.token
+    host                   = module.my_infrastructure.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.my_infrastructure.cluster_ca_data)
+
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.my_infrastructure.cluster_name, "--region", var.aws_region]
+    }
   }
+}
+
+
+
+variable "aws_region" {
+  type    = string
+  default = "us-east-1"
+}
+
+variable "environment" {
+  type    = string
+  default = "dev"
+}
+
+variable "owner" {
+  type    = string
+  default = "dolev"
+}
+
+variable "cost_center" {
+  type    = string
+  default = "devops-team"
+}
+
+variable "cluster_name" {
+  type    = string
+  default = "dolev-demo-cluster"
+}
+
+variable "pipeline_role_arn" {
+  type        = string
+  description = "IAM role the CI/CD pipeline assumes. Gets cluster-admin access to the EKS API. Leave null if not used yet."
+  default     = null
+}
+
+variable "domain_name" {
+  type        = string
+  description = "Application DNS name"
+  default     = "demoapp.com"
+}
+
+variable "enable_dns_tls" {
+  type        = bool
+  description = "Create ACM certificate + Route53 records. Requires a PUBLIC Route53 zone for domain_name that you control. Keep false to test with a hosts file."
+  default     = false
+}
+
+variable "image_repository" {
+  type    = string
+  default = "dolev1234/node-demo-local"
+}
+
+variable "image_tag" {
+  type        = string
+  description = "Image tag. The app pipeline should override this with the commit SHA."
+  default     = "latest"
 }

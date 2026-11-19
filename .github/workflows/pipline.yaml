@@ -17,6 +17,8 @@ permissions:
   contents: read
 
 jobs:
+  
+#---
   build-and-push:
     name: 'Build and Push Docker Image'
     runs-on: ubuntu-latest
@@ -49,7 +51,7 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_MESSAGE: 'build and push passed and push to docker hub'
-
+#---
   terraform-deploy:
     name: 'Terraform Validate & Apply'
     runs-on: ubuntu-latest
