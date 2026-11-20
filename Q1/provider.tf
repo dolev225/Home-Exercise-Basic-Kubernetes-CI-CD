@@ -1,6 +1,13 @@
 terraform {
   required_version = ">= 1.6.0"
 
+  backend "s3" {
+    bucket  = "dolev-tfstate-bucket"
+    key     = "eks-demo/terraform.tfstate"
+    region  = "us-east-1"
+    encrypt = true
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -96,7 +103,7 @@ variable "domain_name" {
 
 variable "enable_dns_tls" {
   type        = bool
-  description = "Create ACM certificate + Route53 records. Requires a PUBLIC Route53 zone for domain_name that you control. Keep false to test with a hosts file."
+  description = "Create ACM certificate + Route53 records."
   default     = false
 }
 
