@@ -145,10 +145,7 @@ resource "kubernetes_ingress_v1" "node_app_ingress" {
   ]
 }
 
-# ---------------------------------------------------------------------------
-# Route53 Alias record -> ALB
-# ALB hosted zone ID for us-east-1 is fixed: Z35SXDOTRQ7X7K
-# ---------------------------------------------------------------------------
+
 resource "aws_route53_record" "app_alias" {
   count = var.enable_dns_tls && var.deploy_apps ? 1 : 0
 
