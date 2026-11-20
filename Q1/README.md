@@ -20,15 +20,6 @@ Internet
    └── Private subnets → NAT Gateway (single, cost-optimized for demo)
 ```
 
-### Key Design Decisions
-
-| Decision | Reason |
-|----------|--------|
-| **Single NAT Gateway** | Cost optimization for a demo/dev environment. In production use one NAT per AZ. |
-| **Public EKS endpoint** (`0.0.0.0/0`) | Simplifies CI/CD and local access. Restrict to your IP/CIDR in production. |
-| **VPC Flow Logs** | Best practice for network visibility and troubleshooting. |
-| **IRSA for ALB Controller** | Secure, temporary credentials instead of long-lived keys. |
-| **Access Entries** | Modern EKS authentication (instead of aws-auth ConfigMap). |
 
 ## Prerequisites
 
