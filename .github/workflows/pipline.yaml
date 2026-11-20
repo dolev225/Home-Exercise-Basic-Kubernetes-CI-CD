@@ -81,6 +81,12 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
+      - name: Terraform Apply Access Entries first
+        run: |
+          terraform apply -auto-approve \
+            -target='module.my_infrastructure.module.eks.aws_eks_access_entry.this["cluster_creator"]' \
+            -target='module.my_infrastructure.module.eks.aws_eks_access_policy_association.this["cluster_creator_admin"]'
+
       - name: Terraform Apply
         run: |
           terraform apply -auto-approve \
