@@ -80,9 +80,7 @@ resource "helm_release" "node_app" {
   depends_on = [helm_release.aws_lb_controller]
 }
 
-# ---------------------------------------------------------------------------
-# Ingress (ALB)
-# ---------------------------------------------------------------------------
+
 locals {
   ingress_annotations = {
     "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
