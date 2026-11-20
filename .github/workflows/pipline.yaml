@@ -75,6 +75,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Setup kubectl and helm
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+          chmod 700 get_helm.sh && ./get_helm.sh
+
       - name: Terraform Init
         run: terraform init
 
@@ -86,6 +93,19 @@ jobs:
           terraform apply -auto-approve -refresh=false \
             -target='module.my_infrastructure.module.eks.aws_eks_access_entry.this["cluster_creator"]' \
             -target='module.my_infrastructure.module.eks.aws_eks_access_policy_association.this["cluster_creator_admin"]'
+
+      - name: Configure kubeconfig
+        run: aws eks update-kubeconfig --region us-east-1 --name dolev-demo-cluster-v2
+
+      - name: Clean pending Helm operations
+        run: |
+          # Clean any stuck pending releases for the node app
+          kubectl delete secret -n default -l owner=helm,name=my-node-app,status=pending-upgrade --ignore-not-found=true || true
+          kubectl delete secret -n default -l owner=helm,name=my-node-app,status=pending-install --ignore-not-found=true || true
+          kubectl delete secret -n default -l owner=helm,name=my-node-app,status=pending-rollback --ignore-not-found=true || true
+          # Also clean ALB controller if needed
+          kubectl delete secret -n kube-system -l owner=helm,name=aws-load-balancer-controller,status=pending-upgrade --ignore-not-found=true || true
+          kubectl delete secret -n kube-system -l owner=helm,name=aws-load-balancer-controller,status=pending-install --ignore-not-found=true || true
 
       - name: Terraform Apply
         run: |
