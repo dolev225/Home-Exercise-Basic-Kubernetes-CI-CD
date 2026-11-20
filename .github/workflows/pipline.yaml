@@ -109,6 +109,8 @@ jobs:
         run: |
           terraform apply -auto-approve \
             -var="deploy_apps=true" \
+            -var="enable_dns_tls=true" \
+            -var="domain_name=dolev-demoapp.com" \
             -var="image_repository=dolev1234/node-demo-local" \
             -var="image_tag=${{ github.sha }}"
 
@@ -124,4 +126,4 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_TITLE: "Deployment Successful"
-          SLACK_MESSAGE: "The application has been deployed successfully!\nALB URL: http://${{ steps.alb.outputs.hostname }}"
+          SLACK_MESSAGE: "The application has been deployed successfully!\nURL: https://dolev-demoapp.com\nALB: http://${{ steps.alb.outputs.hostname }}"
