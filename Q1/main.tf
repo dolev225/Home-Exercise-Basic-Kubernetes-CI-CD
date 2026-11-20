@@ -136,3 +136,6 @@ output "alb_hostname" {
   description = "ALB DNS name"
   value       = try(kubernetes_ingress_v1.node_app_ingress[0].status[0].load_balancer[0].ingress[0].hostname, null)
 }
+
+
+
