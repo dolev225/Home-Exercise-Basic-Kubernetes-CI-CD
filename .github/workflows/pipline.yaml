@@ -17,8 +17,6 @@ permissions:
   contents: read
 
 jobs:
-  
-#---
   build-and-push:
     name: 'Build and Push Docker Image'
     runs-on: ubuntu-latest
@@ -36,7 +34,7 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: 'login to docker hub passed'
+          SLACK_MESSAGE: 'Login to Docker Hub passed'
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -44,18 +42,19 @@ jobs:
           context: .
           file: ./Q1/dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/test10:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/test10:${{ github.sha }}
 
       - name: Notify Slack (Build Success)
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: 'build and push passed and push to docker hub'
-#---
+          SLACK_MESSAGE: 'Build and push passed'
+
   terraform-deploy:
     name: 'Terraform Validate & Apply'
     runs-on: ubuntu-latest
     needs: [build-and-push]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     defaults:
       run:
         working-directory: Q1
@@ -82,9 +81,22 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
-      - name: Terraform Plan
-        run: terraform plan -no-color
-
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve
+        run: |
+          terraform apply -auto-approve \
+            -var="deploy_apps=true" \
+            -var="image_tag=${{ github.sha }}"
+
+      - name: Get ALB Hostname
+        id: alb
+        run: |
+          HOSTNAME=$(terraform output -raw alb_hostname)
+          echo "hostname=$HOSTNAME" >> $GITHUB_OUTPUT
+          echo "ALB Hostname: $HOSTNAME"
+
+      - name: Notify Slack with ALB URL
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_TITLE: "Deployment Successful"
+          SLACK_MESSAGE: "The application has been deployed successfully!\nALB URL: http://${{ steps.alb.outputs.hostname }}"
