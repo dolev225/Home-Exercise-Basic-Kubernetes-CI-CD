@@ -52,11 +52,6 @@ resource "helm_release" "aws_lb_controller" {
   }
 }
 
-  set {
-    name  = "image.tag"
-    value = var.image_tag
-  }
-
 # ---------------------------------------------------------------------------
 # Demo application
 # ---------------------------------------------------------------------------
@@ -85,19 +80,12 @@ resource "helm_release" "node_app" {
 # Ingress (ALB)
 # ---------------------------------------------------------------------------
 locals {
-  ingress_annotations = merge(
-    {
-      "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
-      "alb.ingress.kubernetes.io/target-type"      = "ip"
-      "alb.ingress.kubernetes.io/healthcheck-path" = "/"
-      "alb.ingress.kubernetes.io/listen-ports"     = "[{\"HTTP\": 80}]"
-    },
-    var.enable_dns_tls ? {
-      "alb.ingress.kubernetes.io/listen-ports"    = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
-      "alb.ingress.kubernetes.io/ssl-redirect"    = "443"
-      "alb.ingress.kubernetes.io/certificate-arn" = one(aws_acm_certificate_validation.app[*].certificate_arn)
-    } : {}
-  )
+  ingress_annotations = {
+    "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
+    "alb.ingress.kubernetes.io/target-type"      = "ip"
+    "alb.ingress.kubernetes.io/healthcheck-path" = "/"
+    "alb.ingress.kubernetes.io/listen-ports"     = "[{\"HTTP\": 80}]"
+  }
 }
 
 resource "kubernetes_ingress_v1" "node_app_ingress" {
@@ -140,66 +128,6 @@ resource "kubernetes_ingress_v1" "node_app_ingress" {
 }
 
 output "alb_hostname" {
-  description = "ALB DNS name. Point demoapp.com to it in your hosts file if DNS is disabled."
+  description = "ALB DNS name"
   value       = try(kubernetes_ingress_v1.node_app_ingress[0].status[0].load_balancer[0].ingress[0].hostname, null)
-}
-
-# ---------------------------------------------------------------------------
-# Optional DNS + TLS
-# ---------------------------------------------------------------------------
-
-data "aws_route53_zone" "main" {
-  count        = var.enable_dns_tls ? 1 : 0
-  name         = var.domain_name
-  private_zone = false
-}
-
-resource "aws_acm_certificate" "app" {
-  count             = var.enable_dns_tls ? 1 : 0
-  domain_name       = var.domain_name
-  validation_method = "DNS"
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_route53_record" "cert_validation" {
-  for_each = var.enable_dns_tls ? {
-    for dvo in aws_acm_certificate.app[0].domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
-    }
-  } : {}
-
-  zone_id         = data.aws_route53_zone.main[0].zone_id
-  name            = each.value.name
-  type            = each.value.type
-  records         = [each.value.record]
-  ttl             = 60
-  allow_overwrite = true
-}
-
-resource "aws_acm_certificate_validation" "app" {
-  count                   = var.enable_dns_tls ? 1 : 0
-  certificate_arn         = aws_acm_certificate.app[0].arn
-  validation_record_fqdns = [for r in aws_route53_record.cert_validation : r.fqdn]
-}
-
-data "aws_lb_hosted_zone_id" "alb" {
-  count = var.enable_dns_tls ? 1 : 0
-}
-
-resource "aws_route53_record" "app" {
-  count   = var.enable_dns_tls ? 1 : 0
-  zone_id = data.aws_route53_zone.main[0].zone_id
-  name    = var.domain_name
-  type    = "A"
-
-  alias {
-    name                   = kubernetes_ingress_v1.node_app_ingress[0].status[0].load_balancer[0].ingress[0].hostname
-    zone_id                = data.aws_lb_hosted_zone_id.alb[0].id
-    evaluate_target_health = true
-  }
 }
