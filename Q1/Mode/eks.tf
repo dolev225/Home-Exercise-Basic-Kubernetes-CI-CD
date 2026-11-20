@@ -9,7 +9,7 @@ module "eks" {
   cluster_endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
 
   vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets # nodes live in private subnets only
+  subnet_ids = module.vpc.private_subnets 
 
   eks_managed_node_groups = {
     worker_nodes = {

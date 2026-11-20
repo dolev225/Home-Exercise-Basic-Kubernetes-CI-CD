@@ -15,14 +15,11 @@ terraform {
       version = "~> 2.12"
     }
   }
-
-
 }
 
 provider "aws" {
   region = var.aws_region
 
-  # Organization policy: these three tags are required on every resource.
   default_tags {
     tags = {
       environment = var.environment
@@ -32,8 +29,6 @@ provider "aws" {
   }
 }
 
-# Kubernetes/Helm providers read the cluster details straight from the module outputs
-# (no data sources that depend on the module, which breaks the first apply).
 provider "kubernetes" {
   host                   = module.my_infrastructure.cluster_endpoint
   cluster_ca_certificate = base64decode(module.my_infrastructure.cluster_ca_data)
@@ -58,7 +53,9 @@ provider "helm" {
   }
 }
 
-
+# ---------------------------------------------------------------------------
+# Variables
+# ---------------------------------------------------------------------------
 
 variable "aws_region" {
   type    = string
@@ -112,4 +109,10 @@ variable "image_tag" {
   type        = string
   description = "Image tag. The app pipeline should override this with the commit SHA."
   default     = "latest"
+}
+
+variable "deploy_apps" {
+  type        = bool
+  description = "Deploy Helm releases and Ingress. Set to false on first apply (or after destroy)."
+  default     = false
 }

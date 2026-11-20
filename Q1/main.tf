@@ -9,8 +9,12 @@ module "my_infrastructure" {
   pipeline_role_arn = var.pipeline_role_arn
 }
 
-
+# ---------------------------------------------------------------------------
+# AWS Load Balancer Controller
+# ---------------------------------------------------------------------------
 resource "helm_release" "aws_lb_controller" {
+  count = var.deploy_apps ? 1 : 0
+
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
@@ -42,15 +46,23 @@ resource "helm_release" "aws_lb_controller" {
     value = "aws-load-balancer-controller"
   }
 
-  # IRSA: ties the Kubernetes service account to the IAM role
   set {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
     value = module.my_infrastructure.alb_controller_role_arn
   }
 }
 
+set {
+  name  = "image.tag"
+  value = var.image_tag
+}
 
+# ---------------------------------------------------------------------------
+# Demo application
+# ---------------------------------------------------------------------------
 resource "helm_release" "node_app" {
+  count = var.deploy_apps ? 1 : 0
+
   name             = "my-node-app"
   chart            = "./helm"
   namespace        = "default"
@@ -66,11 +78,12 @@ resource "helm_release" "node_app" {
     value = var.image_tag
   }
 
-  # The Ingress is validated by the LB controller's webhook, so it must be running first
   depends_on = [helm_release.aws_lb_controller]
 }
 
-
+# ---------------------------------------------------------------------------
+# Ingress (ALB)
+# ---------------------------------------------------------------------------
 locals {
   ingress_annotations = merge(
     {
@@ -88,6 +101,8 @@ locals {
 }
 
 resource "kubernetes_ingress_v1" "node_app_ingress" {
+  count = var.deploy_apps ? 1 : 0
+
   metadata {
     name        = "my-node-app-ingress"
     namespace   = "default"
@@ -100,7 +115,6 @@ resource "kubernetes_ingress_v1" "node_app_ingress" {
     ingress_class_name = "alb"
 
     rule {
-
       http {
         path {
           path      = "/"
@@ -108,7 +122,7 @@ resource "kubernetes_ingress_v1" "node_app_ingress" {
 
           backend {
             service {
-              name = "my-node-app-svc" 
+              name = "my-node-app-svc"
               port {
                 number = 80
               }
@@ -127,12 +141,11 @@ resource "kubernetes_ingress_v1" "node_app_ingress" {
 
 output "alb_hostname" {
   description = "ALB DNS name. Point demoapp.com to it in your hosts file if DNS is disabled."
-  value       = try(kubernetes_ingress_v1.node_app_ingress.status[0].load_balancer[0].ingress[0].hostname, null)
+  value       = try(kubernetes_ingress_v1.node_app_ingress[0].status[0].load_balancer[0].ingress[0].hostname, null)
 }
 
 # ---------------------------------------------------------------------------
-# Optional DNS + TLS (enable_dns_tls = true)
-# Needs a public Route53 zone for var.domain_name that you actually own.
+# Optional DNS + TLS
 # ---------------------------------------------------------------------------
 
 data "aws_route53_zone" "main" {
@@ -178,7 +191,6 @@ data "aws_lb_hosted_zone_id" "alb" {
   count = var.enable_dns_tls ? 1 : 0
 }
 
-# A zone apex cannot be a CNAME, so use an alias A record pointing to the ALB
 resource "aws_route53_record" "app" {
   count   = var.enable_dns_tls ? 1 : 0
   zone_id = data.aws_route53_zone.main[0].zone_id
@@ -186,7 +198,7 @@ resource "aws_route53_record" "app" {
   type    = "A"
 
   alias {
-    name                   = kubernetes_ingress_v1.node_app_ingress.status[0].load_balancer[0].ingress[0].hostname
+    name                   = kubernetes_ingress_v1.node_app_ingress[0].status[0].load_balancer[0].ingress[0].hostname
     zone_id                = data.aws_lb_hosted_zone_id.alb[0].id
     evaluate_target_health = true
   }
