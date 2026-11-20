@@ -50,6 +50,10 @@ resource "helm_release" "aws_lb_controller" {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
     value = module.my_infrastructure.alb_controller_role_arn
   }
+
+  depends_on = [
+    module.my_infrastructure
+  ]
 }
 
 # ---------------------------------------------------------------------------

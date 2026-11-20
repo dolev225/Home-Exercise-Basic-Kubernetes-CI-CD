@@ -86,7 +86,7 @@ variable "cost_center" {
 
 variable "cluster_name" {
   type    = string
-  default = "dolev-demo-cluster-v3"
+  default = "dolev-demo-cluster-v2"
 }
 
 variable "pipeline_role_arn" {
