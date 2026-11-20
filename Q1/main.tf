@@ -21,6 +21,9 @@ resource "helm_release" "aws_lb_controller" {
   namespace  = "kube-system"
   version    = "1.9.0"
 
+  timeout = 600
+  wait    = true
+
   set {
     name  = "clusterName"
     value = module.my_infrastructure.cluster_name
@@ -67,6 +70,9 @@ resource "helm_release" "node_app" {
   namespace        = "default"
   create_namespace = true
 
+  timeout = 600
+  wait    = true
+
   set {
     name  = "image.repository"
     value = var.image_repository
@@ -79,7 +85,6 @@ resource "helm_release" "node_app" {
 
   depends_on = [helm_release.aws_lb_controller]
 }
-
 
 locals {
   ingress_annotations = {
@@ -100,6 +105,10 @@ resource "kubernetes_ingress_v1" "node_app_ingress" {
   }
 
   wait_for_load_balancer = true
+
+  timeouts {
+    create = "15m"
+  }
 
   spec {
     ingress_class_name = "alb"
