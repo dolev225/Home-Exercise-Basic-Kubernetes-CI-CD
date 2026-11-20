@@ -80,13 +80,7 @@ The pipeline (`.github/workflows/pipline.yaml`) runs automatically on push to `m
 | `DOCKERHUB_TOKEN` | Docker Hub access token |
 | `SLACK_WEBHOOK` | Slack incoming webhook URL |
 
-## Connecting to the Cluster
 
-```bash
-aws eks update-kubeconfig --region us-east-1 --name dolev-demo-cluster-v2
-kubectl get nodes
-kubectl get pods -A
-```
 
 ## Outputs
 
@@ -94,18 +88,11 @@ After a successful apply with `deploy_apps=true`:
 
 ```bash
 terraform output alb_hostname
+slack msg for the url (http://<url/domain>)
 ```
 
 This is the public URL of the application (HTTP).
 
-## Troubleshooting
-
-| Problem | Solution |
-|---------|----------|
-| `the server has asked for the client to provide credentials` | Run the targeted access entry apply first (see pipeline step). |
-| `another operation is in progress` | The pipeline cleans this automatically. Manually: `kubectl delete secret -n default -l owner=helm,name=my-node-app,status=pending-upgrade` |
-| `context deadline exceeded` | Image pull issue or pods not becoming Ready. Check `kubectl describe pod` and image name/tag. |
-| ALB not created | Verify AWS Load Balancer Controller is running: `kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller` |
 
 ## Destroy
 
@@ -113,4 +100,4 @@ This is the public URL of the application (HTTP).
 terraform destroy -var="deploy_apps=true"
 ```
 
-> Note: Destroy the Helm releases / Ingress first if you encounter dependency issues, or set `deploy_apps=false` and apply before full destroy.
+ Note: Destroy the Helm releases / Ingress first if you encounter dependency issues, or set `deploy_apps=false` and apply before full destroy.
