@@ -9,9 +9,7 @@ module "my_infrastructure" {
   pipeline_role_arn = var.pipeline_role_arn
 }
 
-# ---------------------------------------------------------------------------
-# AWS Load Balancer Controller
-# ---------------------------------------------------------------------------
+
 resource "helm_release" "aws_lb_controller" {
   count = var.deploy_apps ? 1 : 0
 
