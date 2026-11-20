@@ -99,11 +99,9 @@ jobs:
 
       - name: Clean pending Helm operations
         run: |
-          # Clean any stuck pending releases for the node app
           kubectl delete secret -n default -l owner=helm,name=my-node-app,status=pending-upgrade --ignore-not-found=true || true
           kubectl delete secret -n default -l owner=helm,name=my-node-app,status=pending-install --ignore-not-found=true || true
           kubectl delete secret -n default -l owner=helm,name=my-node-app,status=pending-rollback --ignore-not-found=true || true
-          # Also clean ALB controller if needed
           kubectl delete secret -n kube-system -l owner=helm,name=aws-load-balancer-controller,status=pending-upgrade --ignore-not-found=true || true
           kubectl delete secret -n kube-system -l owner=helm,name=aws-load-balancer-controller,status=pending-install --ignore-not-found=true || true
 
@@ -111,6 +109,7 @@ jobs:
         run: |
           terraform apply -auto-approve \
             -var="deploy_apps=true" \
+            -var="image_repository=${{ secrets.DOCKERHUB_USERNAME }}/test10" \
             -var="image_tag=${{ github.sha }}"
 
       - name: Get ALB Hostname

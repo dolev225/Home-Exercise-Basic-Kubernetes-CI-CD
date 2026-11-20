@@ -9,7 +9,6 @@ module "my_infrastructure" {
   pipeline_role_arn = var.pipeline_role_arn
 }
 
-
 resource "helm_release" "aws_lb_controller" {
   count = var.deploy_apps ? 1 : 0
 
@@ -19,7 +18,7 @@ resource "helm_release" "aws_lb_controller" {
   namespace  = "kube-system"
   version    = "1.9.0"
 
-  timeout = 600
+  timeout = 900
   wait    = true
 
   set {
@@ -57,9 +56,6 @@ resource "helm_release" "aws_lb_controller" {
   ]
 }
 
-# ---------------------------------------------------------------------------
-# Demo application
-# ---------------------------------------------------------------------------
 resource "helm_release" "node_app" {
   count = var.deploy_apps ? 1 : 0
 
@@ -68,7 +64,7 @@ resource "helm_release" "node_app" {
   namespace        = "default"
   create_namespace = true
 
-  timeout = 600
+  timeout = 900
   wait    = true
 
   set {
