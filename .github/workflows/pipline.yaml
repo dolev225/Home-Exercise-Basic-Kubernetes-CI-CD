@@ -83,7 +83,7 @@ jobs:
 
       - name: Terraform Apply Access Entries first
         run: |
-          terraform apply -auto-approve \
+          terraform apply -auto-approve -refresh=false \
             -target='module.my_infrastructure.module.eks.aws_eks_access_entry.this["cluster_creator"]' \
             -target='module.my_infrastructure.module.eks.aws_eks_access_policy_association.this["cluster_creator_admin"]'
 
