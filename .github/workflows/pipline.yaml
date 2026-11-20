@@ -42,7 +42,7 @@ jobs:
           context: .
           file: ./Q1/dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/test10:${{ github.sha }}
+          tags: dolev1234/node-demo-local:${{ github.sha }}
 
       - name: Notify Slack (Build Success)
         uses: rtCamp/action-slack-notify@v2
@@ -109,7 +109,7 @@ jobs:
         run: |
           terraform apply -auto-approve \
             -var="deploy_apps=true" \
-            -var="image_repository=${{ secrets.DOCKERHUB_USERNAME }}/test10" \
+            -var="image_repository=dolev1234/node-demo-local" \
             -var="image_tag=${{ github.sha }}"
 
       - name: Get ALB Hostname
