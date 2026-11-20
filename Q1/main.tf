@@ -52,10 +52,10 @@ resource "helm_release" "aws_lb_controller" {
   }
 }
 
-set {
-  name  = "image.tag"
-  value = var.image_tag
-}
+  set {
+    name  = "image.tag"
+    value = var.image_tag
+  }
 
 # ---------------------------------------------------------------------------
 # Demo application
