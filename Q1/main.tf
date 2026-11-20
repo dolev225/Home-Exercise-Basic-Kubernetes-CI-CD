@@ -9,6 +9,26 @@ module "my_infrastructure" {
   pipeline_role_arn = var.pipeline_role_arn
 }
 
+# ---------------------------------------------------------------------------
+# ACM Certificate (for demoapp.com)
+# Note: Validation requires DNS ownership. For demo without domain,
+# use the hostfile method documented in README.md
+# ---------------------------------------------------------------------------
+resource "aws_acm_certificate" "app" {
+  count = var.enable_dns_tls ? 1 : 0
+
+  domain_name       = var.domain_name
+  validation_method = "DNS"
+
+  subject_alternative_names = [
+    "*.${var.domain_name}"
+  ]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 resource "helm_release" "aws_lb_controller" {
   count = var.deploy_apps ? 1 : 0
 
@@ -81,12 +101,18 @@ resource "helm_release" "node_app" {
 }
 
 locals {
-  ingress_annotations = {
-    "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
-    "alb.ingress.kubernetes.io/target-type"      = "ip"
-    "alb.ingress.kubernetes.io/healthcheck-path" = "/"
-    "alb.ingress.kubernetes.io/listen-ports"     = "[{\"HTTP\": 80}]"
-  }
+  ingress_annotations = merge(
+    {
+      "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
+      "alb.ingress.kubernetes.io/target-type"      = "ip"
+      "alb.ingress.kubernetes.io/healthcheck-path" = "/"
+      "alb.ingress.kubernetes.io/listen-ports"     = var.enable_dns_tls ? "[{\"HTTP\": 80}, {\"HTTPS\": 443}]" : "[{\"HTTP\": 80}]"
+    },
+    var.enable_dns_tls ? {
+      "alb.ingress.kubernetes.io/certificate-arn" = aws_acm_certificate.app[0].arn
+      "alb.ingress.kubernetes.io/ssl-redirect"    = "443"
+    } : {}
+  )
 }
 
 resource "kubernetes_ingress_v1" "node_app_ingress" {
@@ -108,6 +134,8 @@ resource "kubernetes_ingress_v1" "node_app_ingress" {
     ingress_class_name = "alb"
 
     rule {
+      host = var.domain_name
+
       http {
         path {
           path      = "/"
@@ -137,5 +165,12 @@ output "alb_hostname" {
   value       = try(kubernetes_ingress_v1.node_app_ingress[0].status[0].load_balancer[0].ingress[0].hostname, null)
 }
 
+output "demo_url" {
+  description = "URL to access the application (after hostfile setup)"
+  value       = "http://${var.domain_name}"
+}
 
-
+output "hostfile_instruction" {
+  description = "Add this line to your hosts file to access the app via demoapp.com"
+  value       = try("${kubernetes_ingress_v1.node_app_ingress[0].status[0].load_balancer[0].ingress[0].hostname} ${var.domain_name}", "ALB not ready yet")
+}
