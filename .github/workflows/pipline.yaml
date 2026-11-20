@@ -121,9 +121,13 @@ jobs:
           echo "hostname=$HOSTNAME" >> $GITHUB_OUTPUT
           echo "ALB Hostname: $HOSTNAME"
 
-      - name: Notify Slack with ALB URL
+      - name: Notify Slack with Application URL
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_TITLE: "Deployment Successful"
-          SLACK_MESSAGE: "The application has been deployed successfully!\nURL: https://dolev-demoapp.com\nALB: http://${{ steps.alb.outputs.hostname }}"
+          SLACK_MESSAGE: |
+            The application has been deployed successfully!
+            
+            Application URL: https://dolev-demoapp.com
+            ALB Hostname: ${{ steps.alb.outputs.hostname }}
