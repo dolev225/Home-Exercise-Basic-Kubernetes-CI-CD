@@ -35,7 +35,8 @@ Sources: AWS Control Tower docs, Landing Zone Accelerator, AWS multi-account whi
 ## 2. Placement Diagram (Scenario)
 
 
-*diagram app a pick*
+*diagram *
+![Landing Zone Diagram](screenshot/diagram.png)
 
 Request Flow
 The user navigates to [https://demoapp.com](https://demoapp.com).
