@@ -58,17 +58,17 @@ terraform apply -var="deploy_apps=true" \
 | `image_tag` | `latest` | Image tag (pipeline overrides with commit SHA) |
 | `cluster_name` | `dolev-demo-cluster-v2` | EKS cluster name |
 
-## CI/CD Pipeline (GitHub Actions)
+## CI/CD Pipeline 
 
 The pipeline (`.github/workflows/pipline.yaml`) runs automatically on push to `main` when files under `Q1/` change.
 
 ### What the pipeline does
 
-1. **Build & Push** – Builds the Docker image and pushes it to `dolev1234/node-demo-local:<commit-sha>`
+1. **Build & Push** – Builds the Docker image and pushes it to dockerhub
 2. **Access Entry** – Ensures the CI user has admin access to the EKS cluster (`-refresh=false` to avoid race conditions)
 3. **Clean pending Helm** – Removes stuck Helm operations from previous failed runs
 4. **Terraform Apply** – Deploys/updates the ALB Controller, application, and Ingress
-5. **Slack Notification** – Sends the ALB hostname to Slack
+5. **Slack Notification** – Sends Slack notification for the docker build and the terraform outputs
 
 ### Required GitHub Secrets
 
@@ -92,12 +92,3 @@ slack msg for the url (http://<url/domain>)
 ```
 
 This is the public URL of the application (HTTPS).
-
-
-## Destroy
-
-```bash
-terraform destroy -var="deploy_apps=true"
-```
-
- Note: Destroy the Helm releases / Ingress first if you encounter dependency issues, or set `deploy_apps=false` and apply before full destroy.
