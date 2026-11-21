@@ -75,4 +75,7 @@ slack msg for the url (http://<url/domain>)
 
 This is the public URL of the application (HTTPS).
 
+# screenshot - working website with domain
+![Landing Zone Diagram](../screenshot/Screenshot 2026-11-20 211857.png)
+
 
