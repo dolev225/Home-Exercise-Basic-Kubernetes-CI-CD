@@ -1,8 +1,24 @@
 # Part 4 – Deploying Inside an AWS Landing Zone
 
-## 1. Research – What is a Landing Zone?
+## 1. Research - Landing Zone
 
-Landing Zone is a multi-account AWS environment designed for scalable baseline for deploying workloads. Rather than running everything in a single AWS account or manually configuring security networking, and billing for each new project a landing zone establishes standardized guardrails and account structures upfront.
+1.A -Landing Zone is a multi-account AWS environment designed for scalable baseline for deploying workloads. Rather than running everything in a single AWS account or manually configuring security networking, and billing for each new project a landing zone establishes standardized guardrails and account structures upfront.
+
+1.B - Account types would you expect to find  are *Management * , *Security* , *Shared Services* , * Experimentation* , *Sandbox (to fix bugs)* 
+
+Management account - he root account that creates the AWS Organization, manages consolidated billing, applies Service Control Policies (SCPs), and provisions new member accounts
+
+Security account - divide to Log Archive & Security Tool . *Log Archive* is where all the logs and the config file are stored for every a account . *Security Tool* Acts as the delegated administrator for organization  giving  the security team services—such as Amazon GuardDuty, AWS Security Hub, and IAM Access Analyzer—giving security teams centralized visibility.
+
+Shared Services account- Managed by central platform or networking teams to provide shared Services across the organization such as Gateway , Firewall , egress , ingress ,VPCs . VPN , golden image , CI/CD, monitoring services and containers registries 
+
+Experimentation account/Sandbox accoun- Working account for testing different environment such as QA , DEV ,PROD or testing bugs in the system
+
+
+1.C - For the research of the landing zone i use AI such as gemini & grokbot and to conform it i look in the AWS website "https://docs.aws.amazon.com/prescriptive-guidance/latest/strategy-migration/aws-landing-zone.html"
+
+
+
 
 
 
@@ -18,19 +34,20 @@ Sources: AWS Control Tower docs, Landing Zone Accelerator, AWS multi-account whi
 
 ## 2. Placement Diagram (Scenario)
 
-```
-Browser
-   │
-   ▼
-[Network Account]
-   CloudFront + WAF + Shared ALB
-   │
-   ▼ (Transit Gateway)
-[Workload Account]
-   VPC (private subnets only, no IGW/NAT)
-   └── EKS Cluster
-       └── Pods
-```
+
+*diagram app a pick*
+
+Request Flow
+The user navigates to [https://demoapp.com](https://demoapp.com).
+
+Route 53 routes the request to the Load Balancer in the Network Account.
+
+The LB terminates TLS and forwards the request through the Transit Gateway.
+
+The request reaches the EKS Cluster in the Workload Account.
+
+It arrives at a Pod running on one of the Nodes.
+
 
 **Assumptions:**
 - DNS for `demoapp.com` lives in the Network account (or is delegated).
