@@ -1,6 +1,7 @@
 # EKS Demo Cluster - Terraform + CI/CD
 
 This directory contains the Infrastructure as Code and deployment configuration for a production-style EKS cluster with an application exposed via AWS Load Balancer.
+The app is accessible at **https://dolev-demoapp.com**.
 
 ## Architecture Overview
 
