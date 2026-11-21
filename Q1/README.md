@@ -3,25 +3,6 @@
 This directory contains the Infrastructure as Code and deployment configuration for a production-style EKS cluster with an application exposed via AWS Load Balancer.
 The app is accessible at **https://dolev-demoapp.com**.
 
-## Architecture Overview
-
-```
-Internet
-   │
-   ▼
-[ALB] ←── Ingress (ALB Controller)
-   │
-   ▼
-[EKS Cluster]
-   ├── Managed Node Group (private subnets)
-   └── AWS Load Balancer Controller (IRSA)
-
-[VPC]
-   ├── Public subnets  → Internet Gateway + ALB
-   └── Private subnets → NAT Gateway (single, cost-optimized for demo)
-```
-
-
 ## Prerequisites
 
 - AWS account with permissions to create EKS, VPC, IAM, etc.
@@ -93,3 +74,5 @@ slack msg for the url (http://<url/domain>)
 ```
 
 This is the public URL of the application (HTTPS).
+
+
