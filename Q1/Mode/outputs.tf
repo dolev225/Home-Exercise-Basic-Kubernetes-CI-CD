@@ -24,6 +24,21 @@ output "vpc_id" {
 }
 
 output "alb_controller_role_arn" {
-  description = "IAM role ARN for the AWS Load Balancer Controller service account"
+  description = "IAM role  for the AWS Load Balancer"
   value       = aws_iam_role.alb_controller.arn
+}
+
+output "acm_certificate_arn" {
+  description = "ARN of the ACM certificate (use in Ingress annotation)"
+  value       = var.enable_dns_tls ? aws_acm_certificate.app[0].arn : null
+}
+
+output "route53_zone_id" {
+  description = "Route 53 Hosted Zone ID"
+  value       = var.enable_dns_tls ? data.aws_route53_zone.main[0].zone_id : null
+}
+
+output "domain_name" {
+  description = "Domain name"
+  value       = var.domain_name
 }

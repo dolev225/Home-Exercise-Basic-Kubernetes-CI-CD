@@ -8,7 +8,6 @@ module "my_infrastructure" {
   cluster_name      = var.cluster_name
   pipeline_role_arn = var.pipeline_role_arn
 
-  # DNS / TLS
   domain_name    = var.domain_name
   enable_dns_tls = var.enable_dns_tls
 }

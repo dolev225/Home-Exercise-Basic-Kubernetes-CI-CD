@@ -91,7 +91,7 @@ terraform output alb_hostname
 slack msg for the url (http://<url/domain>)
 ```
 
-This is the public URL of the application (HTTP).
+This is the public URL of the application (HTTPS).
 
 
 ## Destroy

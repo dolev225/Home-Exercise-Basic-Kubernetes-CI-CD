@@ -43,30 +43,43 @@ variable "ami" {
 
 variable "vpc_cidr" {
   type        = string
-  description = "CIDR block for the VPC"
+  description = "size of block for the VPC"
   default     = "10.0.0.0/16"
 }
 
 variable "private_subnets_range" {
   type        = list(string)
-  description = "IP ranges for private subnets (nodes and pods). /20 leaves room for pod IPs."
+  description = "IP ranges for private subnets "
   default     = ["10.0.16.0/20", "10.0.32.0/20"]
 }
 
 variable "public_subnets_range" {
   type        = list(string)
-  description = "IP ranges for public subnets (load balancers only)"
+  description = "IP ranges for public subnets "
   default     = ["10.0.101.0/24", "10.0.102.0/24"]
 }
 
+variable "domain_name" {
+  description = "Root domain name (must be registered in Route 53)"
+  type        = string
+  default     = "dolev-demoapp.com"
+}
+
+variable "enable_dns_tls" {
+  description = "Create ACM certificate and Route53 records"
+  type        = bool
+  default     = false
+}
+
+
 variable "cluster_endpoint_public_access_cidrs" {
   type        = list(string)
-  description = "CIDRs allowed to reach the public EKS API endpoint. Restrict when possible."
+  description = "cluster endpoint open."
   default     = ["0.0.0.0/0"]
 }
 
 variable "pipeline_role_arn" {
   type        = string
-  description = "IAM role of the CI/CD pipeline; receives cluster-admin on the EKS API."
+  description = " role of the CI/CD pipeline"
   default     = null
 }
