@@ -56,21 +56,27 @@ It arrives at a Pod running on one of the Nodes.
 - CI/CD runs in the Shared Services account and assumes a role into the Workload account.
 
 ## 3. Network Changes vs Part 1
+In Part 1 I created a VPC with: Public and Private subnets ,Internet Gateway,NAT Gateway and Nodes in private subnets (with outbound internet access via NAT)
+In the Landing Zone the VPC I was given has:Private subnets only ,No IG ,no local NAT gateway and the outbound internet access only through the gateway
 
-| # | What I would change | Why |
-|---|---------------------|-----|
-| 1 | Remove Internet Gateway and NAT from the workload VPC | Egress is centralized via Transit Gateway |
-| 2 | No public IPs on nodes | Nodes are in private subnets only |
-| 3 | Add VPC Endpoints for ECR, S3, STS | Image pulls and AWS API calls stay private |
-| 4 | Use a non-overlapping CIDR (e.g. 10.x allocated by the network team) | Avoid conflicts with other accounts |
-| 5 | Point the Ingress/ALB to the shared load balancer instead of creating a new one | Ingress is centralized |
+things that i w=would change in my IAC
+1) Remove Public Subnets and Internet Gateway because All traffic goes through the Transit Gateway and there is no direct internet exposure
+2) Remove the NAT Gateway because egress is managed IN THE network account and its not neccessary also add the cost to the system
+3) Disable Public IPs on Nodes. Nodes do not need a public IP address it will add an opening  for an attack on the cluster
+4) Add VPC Endpoints for ECR and S3 for pull images without going out to the internet
+5) Change the CIDR to avoid overlap in other accounts
 
-## 4. Guardrails
+## 3 Bonus – Implement Two of Them
+1) I will add to the EKS.tf file  in the managed node groups a `associate_public_ip_address = false`
+2) I will add a file for the S3 bucket with `aws_vpc_endpoint` to connet to the s3 privitly and i will add a `aws_security_group` for the s3 bucket with permission for nodes to pull images in privit way
 
-The three required tags (`environment`, `owner`, `cost_center`) are already applied via `default_tags` in the AWS provider.
+## 4. Guardrails - Missing Tag
 
-If a resource is missing a tag, the organization SCP rejects the API call and the pipeline fails with an explicit error.  
-I would add **Checkov** (or tfsec) in the pipeline before `terraform apply` to catch missing tags and other misconfigurations early.
+The three required tags (`environment`, `owner`, `cost_center`) are already applied in my tf code .
+
+If a resource is missing a tag, the pipeline as usual but it will brake because the AWS will return a TagPolicyViolation error then the terraform apply will fail and the environment will stay the same 
+
+I would add `Checkov` in the pipeline *before* `terraform apply` to catch missing tags and other misconfigurations early.
 
 ## 5. FinOps
 
