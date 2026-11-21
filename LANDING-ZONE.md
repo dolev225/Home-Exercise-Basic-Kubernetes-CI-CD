@@ -89,23 +89,23 @@ I would add `Checkov` in the pipeline *before* `terraform apply` to catch missin
 | **Total** | **~$190–220** |
 
 **Cost cuts for dev:**
-1. Spot instances for nodes
-2. Scale to 0 outside working hours
-3. Delete the environment when idle
+1. change instances (ec2) for nodes it will save ~70% in instances cost
+2. scale to 0 outside working hours the instances will not run there for you will not pay for the instances
+3. Delete the environment when idle the cluster will not run there 
 
-I would **not** use Spot or scale-to-zero in production (availability and cold-start risk).  
-Tags let finance filter costs by team/owner in Cost Explorer.
+I would not use change or scale-to-zero in production availability will go down . 
+I will at tags let finance filter costs by team to monitor the Cost . 
+or skile down the instances for lest cost ec2 if the load allows it 
+
+The tags will help the team see how much it is spending and it will be easy to spot. also we can set a budgets alert to know it we went over budget 
+
 
 ## 6. Pipeline Credentials
 
-The pipeline should use **OIDC federation** (GitHub → AWS) to assume a role in the Shared Services account, then assume a second role in the Workload account (cross-account).  
-No long-lived access keys are stored in GitHub.
+In the Workload Account, you create an IAM Role with a trust policy that allows GitHub Actions to OIDC to assume the role.
+in GitHub, the workflow uses aws credentials with role at was assume to it instead of Access Keys then the GitHub sends a token to the aws and AWS returns temporary credentials 
+the credentials live for one hour in not change 
 
-Minimum permissions: EKS, EC2, IAM (limited), Route53, ACM, and Helm-related actions.
+i will set minimum permissions: EKS, EC2, IAM , Route53, ACM, and Helm-related actions.
 
-## How I worked
 
-- Read AWS Control Tower and Landing Zone Accelerator documentation.
-- Compared the scenario with the VPC I built in Part 1.
-- Used AI for structure and cost estimates, then verified pricing on the AWS Pricing Calculator and official docs.
-- Double-checked that private subnets + Transit Gateway is the standard pattern for centralized egress.
